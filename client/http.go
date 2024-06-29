@@ -26,6 +26,9 @@ func NewHTTP(upstreamClientKeepAlives bool, appendRequest bool, timeOut time.Dur
 		Transport: &http.Transport{
 			DisableKeepAlives: !upstreamClientKeepAlives,
 			TLSClientConfig:   &tls.Config{InsecureSkipVerify: allowInsecure},
+			MaxConnsPerHost:     100,
+			MaxIdleConnsPerHost: 100,
+			IdleConnTimeout:     90 * time.Second,
 		},
 		Timeout: timeOut,
 	}

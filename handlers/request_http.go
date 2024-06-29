@@ -84,8 +84,8 @@ func (rq *Request) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate 100% CPU load for service
-	finished := rq.loadGenerator.Generate()
-	defer finished()
+	//finished := rq.loadGenerator.Generate()
+	//defer finished()
 
 	// start timing the service this is used later for the total request time
 	ts := time.Now()
@@ -146,15 +146,15 @@ func (rq *Request) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		hq.SetError(upstreamError)
 	} else {
 		// service time is equal to the randomised time - the current time take
-		d := rq.duration.Calculate()
-		et := time.Now().Sub(ts)
-		rd := d - et
-		if rd > 0 {
-			// randomize the time the request takes if no error
-			lp := rq.log.SleepService(hq.Span, rd)
-			time.Sleep(rd)
-			lp.Finished()
-		}
+		//d := rq.duration.Calculate()
+		//et := time.Now().Sub(ts)
+		//rd := d - et
+		//if rd > 0 {
+		//	// randomize the time the request takes if no error
+		//	lp := rq.log.SleepService(hq.Span, rd)
+		//	time.Sleep(rd)
+		//	lp.Finished()
+		//}
 
 		resp.Code = http.StatusOK
 

@@ -29,13 +29,11 @@ import (
 	"github.com/nicholasjackson/fake-service/timing"
 	"github.com/nicholasjackson/fake-service/tracing"
 
-	cors "github.com/gorilla/handlers"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/soheilhy/cmux"
+	//"github.com/soheilhy/cmux"
 	//"net/http/pprof"
 )
 
@@ -256,9 +254,9 @@ func main() {
 
 	// create a cmux
 	// cmux allows us to have a grpc and a http server listening on the same port
-	m := cmux.New(l)
-	httpListener := m.Match(cmux.HTTP1Fast())
-	grpcListener := m.Match(cmux.Any())
+	//m := cmux.New(l)
+	//httpListener := m.Match(cmux.HTTP1Fast())
+	//grpcListener := m.Match(cmux.Any())
 
 	// create the http handlers
 	hh := handlers.NewHealth(logger, *healthResponseCode)
@@ -286,7 +284,7 @@ func main() {
 	// start the http/s server
 	go func() {
 		var err error
-		err = httpServer.Serve(httpListener)
+		err = httpServer.Serve(l)
 
 		if err != nil && err != http.ErrServerClosed {
 			logger.Log().Error("Error starting http server", "error", err)
@@ -294,17 +292,6 @@ func main() {
 		}
 	}()
 
-	// start the grpc server
-	go func() {
-		err := grpcServer.Serve(grpcListener)
-		if err != nil {
-			logger.Log().Error("Error starting gRPC server", "error", err)
-			os.Exit(1)
-		}
-	}()
-
-	// start the multiplexer listening
-	go m.Serve()
 
 	logger.ServiceStarted(*name, *upstreamURIs, *upstreamWorkers, *listenAddress)
 
@@ -329,7 +316,7 @@ func main() {
 	defer cancel()
 	httpServer.Shutdown(ctx)
 
-	m.Close()
+	l.Close()
 }
 
 //go:embed ui/build
@@ -372,22 +359,22 @@ func createHTTPServer(
 
 	mux.Handle("/", rq)
 
-	// CORS
-	corsOptions := make([]cors.CORSOption, 0)
-	if *allowedOrigins != "" {
-		corsOptions = append(corsOptions, cors.AllowedOrigins(strings.Split(*allowedOrigins, ",")))
-	}
-
-	if *allowedHeaders != "" {
-		corsOptions = append(corsOptions, cors.AllowedHeaders(strings.Split(*allowedHeaders, ",")))
-	}
-
-	if *allowCredentials {
-		corsOptions = append(corsOptions, cors.AllowCredentials())
-	}
+	//// CORS
+	//corsOptions := make([]cors.CORSOption, 0)
+	//if *allowedOrigins != "" {
+	//	corsOptions = append(corsOptions, cors.AllowedOrigins(strings.Split(*allowedOrigins, ",")))
+	//}
+	//
+	//if *allowedHeaders != "" {
+	//	corsOptions = append(corsOptions, cors.AllowedHeaders(strings.Split(*allowedHeaders, ",")))
+	//}
+	//
+	//if *allowCredentials {
+	//	corsOptions = append(corsOptions, cors.AllowCredentials())
+	//}
 
 	logger.Log().Info("Settings CORS options", "allow_creds", *allowCredentials, "allow_headers", *allowedHeaders, "allow_origins", *allowedOrigins)
-	ch := cors.CORS(corsOptions...)
+	//ch := cors.CORS(corsOptions...)
 
 	server := &http.Server{
 		Addr:              *listenAddress,
@@ -395,7 +382,7 @@ func createHTTPServer(
 		ReadHeaderTimeout: *serverReadHeaderTimeout,
 		WriteTimeout:      *serverWriteTimeout,
 		IdleTimeout:       *serverIdleTimeout,
-		Handler:           ch(mux),
+		Handler:           mux,
 		ErrorLog:          logger.Log().StandardLogger(&hclog.StandardLoggerOptions{InferLevels: true}),
 	}
 
